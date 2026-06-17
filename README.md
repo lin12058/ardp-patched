@@ -202,3 +202,35 @@ https://github.com/iiordanov/remote-desktop-clients/issues
 Questions and general discussion should be posted at the following forum:
 
 https://groups.google.com/forum/#!forum/bvnc-ardp-aspice-opaque-remote-desktop-clients
+
+## Modified Version
+
+Based on official aRDP Pro v6.4.2, with the following enhancements:
+
+### Feature Changes
+1. **Accessibility Service for Meta/Win Key Capture** — Added  to intercept physical keyboard events (including Meta/Win key) and forward them to RDP sessions. Must be manually enabled in Settings > Accessibility.
+2. **Manual Toolbar Hide/Show Toggle** — Added "Hide Toolbar" menu item that permanently hides the toolbar. Click again to restore. Reconnecting also restores the toolbar.
+
+### Source Code Changes
+| File | Change |
+|---|---|
+|  | New — Accessibility service for physical keyboard capture |
+|  | New — Accessibility service configuration |
+|  | Registered  |
+|  | Added , ,  |
+|  | Added , , toolbar toggle menu handler |
+|  | Added  menu item |
+|  | Added , ,  strings |
+|  | Added Chinese translations for new strings |
+|  | Commented out  (not in v17 prebuilt libs) |
+|  | GStreamer init via reflection (SDK not in classpath) |
+|  | Added  |
+| 12 ×  |  →  (JDK compatibility) |
+
+### Build Configuration
+- JDK 21 (required by AGP 8.13 + compileSdkVersion 35)
+- GitHub Actions CI: 
+- Prebuilt dependencies: v17
+
+### License
+Same as upstream — GNU General Public License v3.

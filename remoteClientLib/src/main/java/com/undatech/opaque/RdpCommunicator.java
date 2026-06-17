@@ -371,7 +371,7 @@ public class RdpCommunicator extends RfbConnectable implements RdpKeyboardMapper
         performanceFlags.setTheming(theming);
         performanceFlags.setGfx(enableGfx);
         performanceFlags.setH264(enableGfxH264);
-        performanceFlags.setGlyphCache(connection.getEnableGlyphCache());
+        // performanceFlags.setGlyphCache(connection.getEnableGlyphCache()); // Not available in prebuilt libs v17
 
         BookmarkBase.AdvancedSettings advancedSettings = bookmark.getAdvancedSettings();
         advancedSettings.setRedirectSDCard(redirectSdCard);

@@ -26,8 +26,8 @@ jobs:
       - run: bash download-prebuilt-dependencies.sh
       - run: bash bVNC/prepare_project.sh --skip-build aRDP $ANDROID_SDK_ROOT
 
-      - name: Clear Gradle transform cache (fix corrupted downloads)
-        run: rm -rf ~/.gradle/caches/*/transforms/
+      - name: Clear entire Gradle cache (fix corrupted artifact downloads)
+        run: rm -rf ~/.gradle/caches/
 
       - run: bash gradlew :aRDP-app:assembleDebug --no-daemon --refresh-dependencies
 

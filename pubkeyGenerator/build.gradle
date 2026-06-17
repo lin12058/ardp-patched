@@ -1,0 +1,53 @@
+apply plugin: 'com.android.library'
+
+android {
+    compileSdkVersion compileApi
+
+    defaultConfig {
+        minSdkVersion project.getProperties().get("SDK_VERSION")
+        targetSdkVersion targetApi
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/versions/9/OSGI-INF/MANIFEST.MF']
+        }
+    }
+
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+    namespace 'com.iiordanov.pubkeygenerator'
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
+    }
+}
+
+// Use the osdetector-gradle-plugin
+apply plugin: "com.google.osdetector"
+
+dependencies {
+    api 'org.connectbot:sshlib:2.2.23'
+    implementation group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: '1.80'
+    implementation group: 'org.bouncycastle', name: 'bcpkix-jdk18on', version: '1.80'
+    api 'net.vrallev.ecc:ecc-25519-java:1.0.3'
+    api 'io.moatwel.crypto:eddsa:0.8.1'
+    api group: 'net.i2p.crypto', name: 'eddsa', version: '0.3.0'
+    implementation project(':common')
+    implementation 'com.google.android.material:material:1.13.0'
+}

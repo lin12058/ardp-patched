@@ -1,0 +1,59 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion compileApi
+
+    defaultConfig {
+        targetSdkVersion targetApi
+        minSdkVersion project.getProperties().get("SDK_VERSION")
+        multiDexEnabled true
+        vectorDrawables.useSupportLibrary = true
+    }
+
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            universalApk true
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+
+    sourceSets.main {
+        java.srcDirs += 'src/main/java'
+    }
+
+    packaging {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/versions/9/OSGI-INF/MANIFEST.MF']
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
+    namespace 'com.undatech.opaque'
+    lint {
+        disable 'Instantiatable'
+    }
+}
+
+dependencies {
+    api 'com.android.support:multidex:1.0.3'
+    implementation project(':bVNC')
+    implementation project(':remoteClientLib')
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+}
+

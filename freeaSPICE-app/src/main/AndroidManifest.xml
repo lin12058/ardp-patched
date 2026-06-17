@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:installLocation="auto"
+    android:versionCode="116420"
+    android:versionName="v6.4.2">
+
+    <uses-permission tools:node="removeAll" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+
+    <application
+        android:name="com.iiordanov.bVNC.App"
+        android:allowBackup="false"
+        android:banner="@mipmap/banner_aspice"
+        android:icon="@mipmap/icon_aspice"
+        android:label="@string/freeaspice_app_name"
+        android:theme="@style/AppThemeDayNight"
+        tools:replace="android:label,android:theme">
+        <activity
+            android:name="com.undatech.opaque.ConnectionGridActivity"
+            android:configChanges="keyboardHidden"
+            android:exported="true"
+            android:label="@string/freeaspice_app_name"
+            android:resizeableActivity="true"
+            android:theme="@style/AppThemeDayNight"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.MULTIWINDOW_LAUNCHER" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="com.iiordanov.bVNC.aSPICE"
+            android:configChanges="orientation|keyboardHidden"
+            android:label="@string/freeaspice_app_name"
+            android:resizeableActivity="true"
+            android:screenOrientation="fullUser"
+            android:theme="@style/AppThemeDayNight"
+            android:windowSoftInputMode="stateHidden|adjustResize" />
+        <activity
+            android:name="com.iiordanov.bVNC.RemoteCanvasActivity"
+            android:configChanges="colorMode|density|fontScale|fontWeightAdjustment|keyboard|keyboardHidden|layoutDirection|locale|mcc|mnc|navigation|orientation|screenLayout|screenSize|smallestScreenSize|touchscreen|uiMode"
+            android:exported="true"
+            android:resizeableActivity="true"
+            android:theme="@style/AppTheme"
+            android:windowSoftInputMode="stateHidden|adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"></action>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="spice" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="intent" />
+                <data android:mimeType="application/vnd.spice" />
+            </intent-filter>
+
+            <intent-filter
+                android:icon="@mipmap/icon_aspice"
+                android:label="@string/opaque_app_name">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:mimeType="application/x-virt-viewer"
+                    android:scheme="file" />
+                <data
+                    android:mimeType="application/x-virt-viewer"
+                    android:scheme="content" />
+            </intent-filter>
+
+            <intent-filter
+                android:icon="@mipmap/icon_aspice"
+                android:label="@string/opaque_app_name">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:host="*"
+                    android:mimeType="application/x-virt-viewer"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="application/x-virt-viewer"
+                    android:scheme="content" />
+            </intent-filter>
+
+            <intent-filter
+                android:icon="@mipmap/icon_aspice"
+                android:label="@string/opaque_app_name">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+            </intent-filter>
+
+            <intent-filter
+                android:icon="@mipmap/icon_aspice"
+                android:label="@string/opaque_app_name">
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.BROWSABLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="file" />
+
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+                <data
+                    android:host="*"
+                    android:mimeType="*/*"
+                    android:pathPattern=".*\\..*\\..*\\..*\\..*\\..*\\..*\\.vv"
+                    android:scheme="content" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest> 

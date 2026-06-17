@@ -1,0 +1,33 @@
+name: Build aRDP Pro
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ANDROID_HOME: /usr/local/lib/android/sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - uses: android-actions/setup-android@v3
+
+      - run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+
+      - name: Fix line endings
+        run: find . -name "*.sh" -type f -exec sed -i 's/\r$//' {} \;
+
+      - run: bash download-prebuilt-dependencies.sh
+      - run: bash bVNC/prepare_project.sh --skip-build aRDP $ANDROID_SDK_ROOT
+      - run: bash gradlew :aRDP-app:assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aRDP-Patched
+          path: aRDP-app/build/outputs/apk/debug/*.apk

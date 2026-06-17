@@ -1,0 +1,826 @@
+/**
+ * Copyright (C) 2012 Iordan Iordanov
+ * Copyright (C) 2010 Michael A. MacDonald
+ * <p>
+ * This is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * <p>
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * <p>
+ * You should have received a copy of the GNU General Public License
+ * along with this software; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307,
+ * USA.
+ */
+
+package com.iiordanov.bVNC;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ActivityManager;
+import android.app.ActivityManager.MemoryInfo;
+import android.app.Dialog;
+import android.content.ActivityNotFoundException;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.ContextWrapper;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnClickListener;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Message;
+import android.text.ClipboardManager;
+import android.text.Html;
+import android.util.Log;
+import android.view.View;
+import android.view.ViewConfiguration;
+import android.view.Window;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.ScrollView;
+import android.widget.Spinner;
+
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.antlersoft.android.contentxml.SqliteElement;
+import com.antlersoft.android.contentxml.SqliteElement.ReplaceStrategy;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GoogleApiAvailability;
+import com.google.android.gms.tasks.Task;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.android.play.core.review.ReviewInfo;
+import com.google.android.play.core.review.ReviewManager;
+import com.google.android.play.core.review.ReviewManagerFactory;
+import com.undatech.opaque.AbstractDrawableData;
+import com.undatech.opaque.ConnectionSetupActivity;
+import com.undatech.opaque.RemoteClientLibConstants;
+import com.undatech.remoteClientUi.R;
+
+import net.sqlcipher.database.SQLiteDatabase;
+
+import org.xml.sax.SAXException;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.lang.reflect.Field;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
+import jcifs.netbios.NbtAddress;
+
+public class Utils {
+    private final static String TAG = "Utils";
+    public static String[] standardPackageNames = {
+            "com.iiordanov.bVNC", "com.iiordanov.freebVNC",
+            "com.iiordanov.aRDP", "com.iiordanov.freeaRDP",
+            "com.iiordanov.aSPICE", "com.iiordanov.freeaSPICE"
+    };
+    private static AlertDialog alertDialog;
+
+    public static void showYesNoPrompt(Context _context, String title, String message, OnClickListener onYesListener, OnClickListener onNoListener) {
+        try {
+            if (isContextActivityThatIsFinishing(_context)) {
+                return;
+            }
+            if (alertDialogIsShowingAndActivityNotFinishing(_context)) {
+                alertDialog.dismiss();
+            }
+            showAlertDialog(_context, title, message, onYesListener, onNoListener);
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Could not show dialog " + Log.getStackTraceString(e));
+        }
+    }
+
+    private static void showAlertDialog(Context _context, String title, String message, OnClickListener onYesListener, OnClickListener onNoListener) {
+        AlertDialog.Builder builder;
+        if (isContextActivityThatIsFinishing(_context)) {
+            return;
+        }
+        if (Constants.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            builder = new AlertDialog.Builder(_context, R.style.AlertDialogTheme);
+        } else {
+            Log.w(TAG, "No Alert Dialog theme applied on order Android version.");
+            builder = new AlertDialog.Builder(_context);
+        }
+        builder.setTitle(title);
+        builder.setIcon(android.R.drawable.ic_dialog_info);
+        builder.setMessage(message);
+        builder.setCancelable(false);
+        builder.setPositiveButton(_context.getString(android.R.string.yes), onYesListener);
+        builder.setNegativeButton(_context.getString(android.R.string.no), onNoListener);
+        if (alertDialogNotShowingAndActivityNotFinishing(_context)) {
+            alertDialog = builder.create();
+            alertDialog.show();
+        }
+    }
+
+    public static ActivityManager getActivityManager(Context context) {
+        ActivityManager result = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        if (result == null)
+            throw new UnsupportedOperationException("Could not retrieve ActivityManager");
+        return result;
+    }
+
+    public static MemoryInfo getMemoryInfo(Context _context) {
+        MemoryInfo info = new MemoryInfo();
+        getActivityManager(_context).getMemoryInfo(info);
+        return info;
+    }
+
+    public static void showErrorMessage(Context _context, String message) {
+        showMessage(_context, _context.getString(R.string.error) + "!", message, android.R.drawable.ic_dialog_alert, (dialog, which) -> dialog.dismiss());
+    }
+
+    public static void showFatalErrorMessage(final Context _context, String message) {
+        showMessage(_context, _context.getString(R.string.error) + "!", message, android.R.drawable.ic_dialog_alert, (dialog, which) -> {
+            dialog.dismiss();
+            Activity activity = Utils.getActivity(_context);
+            if (activity != null) {
+                Utils.justFinish(activity);
+            }
+        });
+    }
+
+    public static void showMessage(Context _context, String title, String message, int icon, DialogInterface.OnClickListener ackHandler) {
+        try {
+            if (isContextActivityThatIsFinishing(_context)) {
+                return;
+            }
+            if (alertDialogIsShowingAndActivityNotFinishing(_context)) {
+                alertDialog.dismiss();
+            }
+            AlertDialog.Builder builder = new AlertDialog.Builder(_context);
+            builder.setTitle(title);
+            builder.setMessage(Html.fromHtml(message));
+            builder.setCancelable(false);
+            builder.setPositiveButton(_context.getString(android.R.string.ok), ackHandler);
+            builder.setIcon(icon);
+            if (alertDialogNotShowingAndActivityNotFinishing(_context)) {
+                alertDialog = builder.create();
+                alertDialog.show();
+            }
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "showMessage - IllegalArgumentException");
+            Log.e(TAG, Log.getStackTraceString(e));
+        }
+    }
+
+    private static boolean alertDialogIsShowingAndActivityNotFinishing(Context _context) {
+        return alertDialogNotNullAndIsShowing() && !isContextActivityThatIsFinishing(_context);
+    }
+
+    private static boolean alertDialogNotNullAndIsShowing() {
+        return alertDialog != null && alertDialog.isShowing();
+    }
+
+    private static boolean alertDialogNotShowingAndActivityNotFinishing(Context _context) {
+        return !alertDialogNotNullAndIsShowing() && !isContextActivityThatIsFinishing(_context);
+    }
+
+    /**
+     * Determine if a string is null or empty
+     *
+     * @param s The string to comapare
+     * @return true iff s is null or empty
+     */
+    public static boolean isNullOrEmpty(String s) {
+        return s == null || s.isEmpty();
+    }
+
+    /**
+     * Converts a given sequence of bytes to a human-readable colon-separated Hex format.
+     *
+     */
+    public static String toHexString(byte[] bytes) {
+        char[] hexArray = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+        char[] hexChars = new char[bytes.length * 3];
+        int v, j;
+        for (j = 0; j < bytes.length - 1; j++) {
+            v = bytes[j] & 0xFF;
+            hexChars[j * 3] = hexArray[v / 16];
+            hexChars[j * 3 + 1] = hexArray[v % 16];
+            hexChars[j * 3 + 2] = ':';
+        }
+        v = bytes[j] & 0xFF;
+        hexChars[j * 3] = hexArray[v / 16];
+        hexChars[j * 3 + 1] = hexArray[v % 16];
+        return new String(hexChars);
+    }
+
+    /**
+     * Forces the appearance of a menu in the given context.
+     *
+     */
+    public static void showMenu(Context ctx) {
+        try {
+            ViewConfiguration config = ViewConfiguration.get(ctx);
+            @SuppressWarnings("JavaReflectionMemberAccess") @SuppressLint("PrivateApi") Field menuKeyField = ViewConfiguration.class.getDeclaredField("sHasPermanentMenuKey");
+
+            menuKeyField.setAccessible(true);
+            menuKeyField.setBoolean(config, false);
+        } catch (Exception e) {
+            Log.e(TAG, "showMenu - exception");
+            Log.e(TAG, Log.getStackTraceString(e));
+        }
+    }
+
+    public static String pName(Context context) {
+        String pName = Constants.defaultPackageName;
+        try {
+            pName = context.getPackageName();
+        } catch (Exception e) {
+            Log.e(TAG, "Error obtaining package name from context, using default");
+        }
+        return pName;
+    }
+
+    public static boolean supportEnabled(Context context) {
+        List<String> validInstallers = new ArrayList<>(Arrays.asList("com.android.vending", "com.google.android.feedback"));
+        final String installer = context.getPackageManager().getInstallerPackageName(context.getPackageName());
+        return installer != null && validInstallers.contains(installer);
+    }
+
+    public static boolean isFree(Context context) {
+        return Utils.pName(context).contains("free");
+    }
+
+    public static String getConnectionString(Context context) {
+        return Utils.pName(context) + ".CONNECTION";
+    }
+
+    public static boolean isCustom(Context context) {
+        String packageName = Utils.pName(context);
+        for (String s : standardPackageNames) {
+            if (packageName.equals(s)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isVnc(Context context) {
+        String packageName = Utils.pName(context);
+        return packageName.toLowerCase().contains("vnc");
+    }
+
+    public static boolean isRdp(Context context) {
+        String packageName = Utils.pName(context);
+        return packageName.toLowerCase().contains("rdp");
+    }
+
+    public static boolean isSpice(Context context) {
+        String packageName = Utils.pName(context);
+        return packageName.toLowerCase().contains("spice");
+    }
+
+    public static boolean isOpaque(Context context) {
+        String packageName = Utils.pName(context);
+        return packageName.toLowerCase().contains("opaque");
+    }
+
+    public static String getStringConfigAttribute(
+            Map<String, Map<String, Map<String, ?>>> configData,
+            String configDataKey,
+            String configDataKeyChild,
+            String childAttribute
+    ) throws NullPointerException {
+        try {
+            return (String) Objects.requireNonNull(
+                    Objects.requireNonNull(
+                            configData.get(configDataKey)
+                    ).get(configDataKeyChild)
+            ).get(childAttribute);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "getStringConfigAttribute - NullPointerException");
+            Log.e(TAG, Log.getStackTraceString(e));
+            return "";
+        }
+    }
+
+    public static void setVisibilityForViewElementsViaConfig(
+            Context context,
+            Map<String, Map<String, Map<String, ?>>> configData,
+            String configDataKey,
+            View view
+    ) throws NullPointerException {
+        String packageName = Utils.pName(context);
+        Map<String, Map<String, ?>> element = configData.get(configDataKey);
+        if (element != null) {
+            Map<String, ?> visibility = element.get("visibility");
+
+            if (visibility != null) {
+                for (String s : visibility.keySet()) {
+                    @SuppressLint("DiscouragedApi") int resID = context.getResources().getIdentifier(s, "id", packageName);
+                    View viewElement = view.findViewById(resID);
+                    viewElement.setVisibility((int) visibility.get(s));
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("rawtypes")
+    public static Class getConnectionSetupClass(Context context) {
+        String packageName = Utils.pName(context);
+        boolean custom = isCustom(context);
+        if (isOpaque(context)) {
+            return ConnectionSetupActivity.class;
+        } else if (isVnc(context)) {
+            if (custom) {
+                return CustomVnc.class;
+            } else {
+                return bVNC.class;
+            }
+        } else if (isRdp(context)) {
+            return aRDP.class;
+        } else if (isSpice(context)) {
+            return aSPICE.class;
+        } else {
+            throw new IllegalArgumentException("Could not find appropriate connection setup activity class for package " + packageName);
+        }
+    }
+
+    /**
+     * Opens the Default Connection Settings editor (the hidden per-connection
+     * template that new and file-initiated connections are seeded from): the
+     * full connection editor on the INVISIBLE template row for clients other than
+     * Opaque, or ConnectionSetupActivity on DEFAULT_SETTINGS_FILE for Opaque.
+     */
+    public static void openDefaultConnectionSettings(Context context) {
+        Intent intent = new Intent(context, getConnectionSetupClass(context));
+        intent.putExtra("isNewConnection", false);
+        if (isOpaque(context)) {
+            intent.putExtra(Constants.OPAQUE_CONNECTION_TO_EDIT_INTENT_KEY,
+                    RemoteClientLibConstants.DEFAULT_SETTINGS_FILE);
+        } else {
+            ConnectionBean template = ConnectionBean.getDefaultConnectionTemplate(context);
+            intent.putExtra(Constants.CONNECTION_TO_EDIT_INTENT_KEY, template.getId());
+        }
+        if (!(context instanceof Activity)) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        }
+        context.startActivity(intent);
+    }
+
+    /**
+     * Selects the spinner entry whose backing value (from valuesArrayRes) equals
+     * the given value; leaves the default selection if no match is found.
+     */
+    public static void selectSpinnerByValue(Context context, Spinner spinner,
+                                            int valuesArrayRes, String value) {
+        String[] values = context.getResources().getStringArray(valuesArrayRes);
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].equals(value)) {
+                spinner.setSelection(i);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Returns the backing value (from valuesArrayRes) for the spinner's current
+     * selection, falling back to the supplied current value if out of range.
+     */
+    public static String spinnerValue(Context context, Spinner spinner,
+                                      int valuesArrayRes, String current) {
+        String[] values = context.getResources().getStringArray(valuesArrayRes);
+        int pos = spinner.getSelectedItemPosition();
+        return (pos >= 0 && pos < values.length) ? values[pos] : current;
+    }
+
+    public static String getConnectionScheme(Context context) {
+        String scheme = "unsupported";
+        if (isVnc(context))
+            scheme = "vnc";
+        else if (isRdp(context))
+            scheme = "rdp";
+        else if (isSpice(context))
+            scheme = "spice";
+        return scheme;
+    }
+
+    public static int getDefaultPort(Context context) {
+        int port = Constants.DEFAULT_PROTOCOL_PORT;
+        if (context != null) {
+            if (isRdp(context))
+                port = Constants.DEFAULT_RDP_PORT;
+            else
+                port = Constants.DEFAULT_VNC_PORT;
+        }
+        return port;
+    }
+
+    public static String getDonationPackageName(Context ctx) {
+        return Utils.pName(ctx).replace("free", "");
+    }
+
+    public static String getDonationPackageLink(Context context) {
+        String donationPackageName = getDonationPackageName(context);
+        return "market://details?id=" + donationPackageName;
+    }
+
+    public static String getDonationOpaque() {
+        return "market://details?id=com.undatech.opaque";
+    }
+
+    public static String getDonationPackageUrl(Context context) {
+        String donationPackageName = getDonationPackageName(context);
+        return "https://play.google.com/store/apps/details?id=" + donationPackageName;
+    }
+
+    public static boolean isBlackBerry() {
+        return Build.MODEL.contains("BlackBerry") ||
+                Build.BRAND.contains("BlackBerry") ||
+                Build.MANUFACTURER.contains("BlackBerry");
+    }
+
+    public static void exportSettingsToXml(OutputStream f, SQLiteDatabase db) {
+        Writer writer = new OutputStreamWriter(f);
+        try {
+            SqliteElement.exportDbAsXmlToStream(db, writer);
+            writer.close();
+        } catch (SAXException | IOException e) {
+            Log.e(TAG, Log.getStackTraceString(e));
+        }
+    }
+
+    public static void importSettingsFromXml(InputStream fin, SQLiteDatabase db) {
+        Reader reader = new InputStreamReader(fin);
+        try {
+            SqliteElement.importXmlStreamToDb(db, reader, ReplaceStrategy.REPLACE_EXISTING);
+        } catch (SAXException | IOException e) {
+            Log.e(TAG, Log.getStackTraceString(e));
+        }
+    }
+
+    public static String messageAndStackTraceAsString(Exception e) {
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        e.printStackTrace(pw);
+        String localizedMessage = e.getLocalizedMessage();
+        if (localizedMessage == null)
+            localizedMessage = "";
+
+        return "\n" + localizedMessage + "\n" + sw;
+    }
+
+    public static boolean querySharedPreferenceBoolean(Context context, String key) {
+        return querySharedPreferenceBoolean(context, key, false);
+    }
+
+    public static boolean querySharedPreferenceBoolean(Context context, String key, boolean defaultValue) {
+        boolean result = defaultValue;
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag, Context.MODE_PRIVATE);
+            result = sp.getBoolean(key, defaultValue);
+        }
+        return result;
+    }
+
+    public static String querySharedPreferenceString(Context context, String key, String dftValue) {
+        String result = dftValue;
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag, Context.MODE_PRIVATE);
+            result = sp.getString(key, dftValue);
+        }
+        return result;
+    }
+
+    public static int querySharedPreferencesInt(Context context, String key, int dftValue) {
+        int result = dftValue;
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag, Context.MODE_PRIVATE);
+            result = sp.getInt(key, dftValue);
+        }
+        return result;
+    }
+
+    public static void setSharedPreferenceString(Context context, String key, String value) {
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag, Context.MODE_PRIVATE);
+            Editor editor = sp.edit();
+            editor.putString(key, value);
+            editor.apply();
+            Log.i(TAG, "Set: " + key + " to value: " + value);
+        }
+    }
+
+    public static void setSharedPreferenceBoolean(Context context, String key, boolean value) {
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag, Context.MODE_PRIVATE);
+            Editor editor = sp.edit();
+            editor.putBoolean(key, value);
+            editor.apply();
+            Log.i(TAG, "Set: " + key + " to value: " + value);
+        }
+    }
+
+
+    public static void toggleSharedPreferenceBoolean(Context context, String key) {
+        if (context != null) {
+            SharedPreferences sp = context.getSharedPreferences(Constants.generalSettingsTag,
+                    Context.MODE_PRIVATE);
+            boolean state = sp.getBoolean(key, false);
+            Editor editor = sp.edit();
+            editor.putBoolean(key, !state);
+            editor.apply();
+            Log.i(TAG, "Toggled " + key + " " + state);
+        }
+    }
+
+    static boolean isContextActivityThatIsFinishing(Context _context) {
+        boolean result = false;
+        if (_context instanceof Activity activity) {
+            if (activity.isFinishing() || activity.isDestroyed()) {
+                Log.w(TAG, "isContextActivityThatIsFinishing - Activity is finishing or destroyed");
+                result = true;
+            }
+        }
+        return result;
+    }
+
+    static void writeScreenshotToFile(AbstractDrawableData drawable,
+                                      String filePath, int dstWidth) {
+        try {
+            if (drawable != null && drawable.getMbitmap() != null) {
+                // TODO: Add Filename to settings.
+                FileOutputStream out = new FileOutputStream(filePath);
+                double scaleReduction = (double) drawable.getMbitmap().getWidth() / dstWidth;
+                int dstHeight = (int) ((double) drawable.getMbitmap().getHeight() / scaleReduction);
+                Log.d(TAG, "Desktop screenshot width: " + dstWidth + ", height " + dstHeight);
+                Bitmap tmp = Bitmap.createScaledBitmap(drawable.getMbitmap(), dstWidth, dstHeight, true);
+                tmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+                out.close();
+                tmp.recycle();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, Log.getStackTraceString(e));
+        }
+
+    }
+
+    /**
+     * Creates a connection screen help dialog for each app.
+     *
+     */
+    public static Dialog createMainScreenDialog(Context context) {
+        int textId = R.string.main_screen_help_text;
+        return createDialog(context, textId);
+    }
+
+    /**
+     * Creates a connection screen help dialog for each app.
+     *
+     */
+    public static void createConnectionScreenDialog(Context context) {
+        int textId = R.string.vnc_connection_screen_help_text;
+        if (Utils.isRdp(context))
+            textId = R.string.rdp_connection_screen_help_text;
+        else if (Utils.isSpice(context))
+            textId = R.string.spice_connection_screen_help_text;
+        else if (Utils.isOpaque(context))
+            textId = R.string.opaque_connection_screen_help_text;
+        createDialog(context, textId);
+    }
+
+    public static Dialog createDialog(Context context, int textId) {
+        AlertDialog.Builder adb = new AlertDialog.Builder(context)
+                .setMessage(textId)
+                .setPositiveButton(R.string.close,
+                        (dialog, whichButton) -> {
+                            // We don't have to do anything.
+                        });
+        Dialog d = adb.setView(new ScrollView(context)).create();
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
+        Window w = d.getWindow();
+        if (w != null) {
+            lp.copyFrom(w.getAttributes());
+            lp.width = WindowManager.LayoutParams.MATCH_PARENT;
+            lp.height = WindowManager.LayoutParams.WRAP_CONTENT;
+            d.show();
+            d.getWindow().setAttributes(lp);
+        }
+        return d;
+    }
+
+    public static String newScreenshotFileName() {
+        return UUID.randomUUID().toString() + ".png";
+    }
+
+    public static String getHostFromUriString(String uriString) {
+        if (!uriString.startsWith("http")) {
+            uriString = "https://" + uriString;
+        }
+        Uri uri = Uri.parse(uriString);
+        return uri.getHost();
+    }
+
+    public static Activity getActivity(Context context) {
+        while (context instanceof ContextWrapper) {
+            if (context instanceof Activity) {
+                return (Activity) context;
+            }
+            context = ((ContextWrapper) context).getBaseContext();
+        }
+        return null;
+    }
+
+    public static String getVersionAndCode(Context context) {
+        String result = "";
+        try {
+            String packageName = Utils.pName(context);
+            PackageInfo pInfo = context.getPackageManager().getPackageInfo(packageName, 0);
+            result = pInfo.versionName + "_" + pInfo.versionCode;
+            Log.d(TAG, "Version of " + packageName + " is " + result);
+        } catch (PackageManager.NameNotFoundException e) {
+            Log.e(TAG, Log.getStackTraceString(e));
+        }
+        return result;
+    }
+
+    public static String getStringFromMessage(Message msg, String key) {
+        Bundle s = msg.getData();
+        String value = "";
+        if (s != null) {
+            value = s.getString(key);
+        }
+        return value;
+    }
+
+    public static boolean isShowOnlyConnectionNicknames(Context context) {
+        return Utils.querySharedPreferenceBoolean(context, Constants.showOnlyConnectionNicknames);
+    }
+
+    public static boolean isDoNotShowDesktopThumbnails(Context context) {
+        return Utils.querySharedPreferenceBoolean(context, Constants.doNotShowDesktopThumbnails);
+    }
+
+    public static String getStringResourceByName(Context context, String stringName) {
+        String packageName = Utils.pName(context);
+        @SuppressLint("DiscouragedApi") int resId = context.getResources().getIdentifier(stringName, "string", packageName);
+        String message = "";
+        if (resId > 0) {
+            message = context.getString(resId);
+        }
+        return message;
+    }
+
+    public static void hideKeyboard(Context context, View view) {
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    public static void showKeyboard(Context context, View view) {
+        if (view != null) {
+            InputMethodManager imm = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+            imm.showSoftInput(view, 0);
+        }
+    }
+
+    public static void justFinish(Context context) {
+        Log.d(TAG, "justFinish");
+        if (isOpaque(context) || isSpice(context)) {
+            triggerRestart(context);
+        } else {
+            ((Activity) context).finish();
+        }
+    }
+
+    public static void triggerRestart(Context context) {
+        PackageManager packageManager = context.getPackageManager();
+        Intent intent = packageManager.getLaunchIntentForPackage(context.getPackageName());
+        ComponentName componentName;
+        if (intent != null) {
+            componentName = intent.getComponent();
+            Intent mainIntent = Intent.makeRestartActivityTask(componentName);
+            context.startActivity(mainIntent);
+            Runtime.getRuntime().exit(0);
+        } else {
+            Log.e(TAG, "triggerRestart - null intent, cannot restart");
+        }
+    }
+
+    public static void startUriIntent(Context context, String url) {
+        try {
+            Log.d(TAG, "startUriIntent: Starting intent with url: " + url);
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            context.startActivity(i);
+        } catch (ActivityNotFoundException e) {
+            Log.e(TAG, "startUriIntent: ActivityNotFoundException caught.");
+        }
+    }
+
+    public static void showRateAppDialog(Activity activity) {
+        ReviewManager manager = ReviewManagerFactory.create(activity);
+        Task<ReviewInfo> request = manager.requestReviewFlow();
+        request.addOnCompleteListener(task -> {
+            GoogleApiAvailability apiAvailability = GoogleApiAvailability.getInstance();
+            if (apiAvailability.isGooglePlayServicesAvailable(activity) == ConnectionResult.SUCCESS) {
+                if (task.isSuccessful()) {
+                    ReviewInfo reviewInfo = task.getResult();
+                    Task<Void> flow = manager.launchReviewFlow(activity, reviewInfo);
+                    flow.addOnCompleteListener(completedTask -> Log.d(TAG, "rateApp: Completed: " + completedTask.getResult()));
+                } else {
+                    Log.d(TAG, "rateApp: task is not successful");
+                }
+            }
+        });
+    }
+
+    public static void setClipboard(Context context, String url) {
+        ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+        cm.setText(url);
+    }
+
+
+    public static String getFileExtension(Context context) {
+        String extension = "vnc";
+        if (isRdp(context)) {
+            extension = "rdp";
+        } else if (isOpaque(context)) {
+            extension = "vv";
+        }
+        return extension;
+    }
+
+    public static void showActionBarWithTitle(AppCompatActivity activity) {
+        ActionBar bar = activity.getSupportActionBar();
+        if (bar != null) {
+            bar.setDisplayShowTitleEnabled(true);
+        }
+    }
+
+    /**
+     * Attempts to resolve the given address via NetBIOS and returns the IP string, or null on failure.
+     */
+    public static String resolveNetbiosAddress(String address) {
+        try {
+            NbtAddress nbtAddress = NbtAddress.getByName(address);
+            if (nbtAddress == null) {
+                Log.d(TAG, "NetBIOS returned null address");
+                return null;
+            }
+            String ip = nbtAddress.getHostAddress();
+            Log.d(TAG, "NetBIOS resolved address " + address + " -> " + ip);
+            return ip;
+        } catch (UnknownHostException e) {
+            Log.d(TAG, "NetBIOS failed to resolve address " + address);
+            return null;
+        }
+    }
+
+    /**
+     * Convert line endings from CRLF or CR to LF
+     */
+    public static String convertLF(String buf) {
+        return buf.replaceAll("\\r\\n?", "\n");
+    }
+
+    /**
+     * Convert line endings from LF to CRLF
+     */
+    public static String convertCRLF(String buf) {
+        return convertLF(buf).replaceAll("\\n", "\r\n");
+    }
+
+    static void showMessage(View view, CharSequence message, int length) {
+        makeMessage(view, message, length).show();
+    }
+
+    static Snackbar makeMessage(View view, CharSequence message, int length) {
+        return Snackbar.make(view, message, length)
+                .setBackgroundTint(Color.parseColor("#90FFFFFF")).setAction(
+                        view.getContext().getString(R.string.ok) + "〉", v -> {
+                        });
+    }
+}

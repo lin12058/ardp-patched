@@ -43,18 +43,13 @@ public class RemoteRdpKeyboard extends RemoteKeyboard {
 
     /**
      * Send a key event from AccessibilityService.
+     * Routes through processLocalKeyEvent for proper scancode mapping and state tracking.
      * @param e the KeyEvent from accessibility service
-     * @param down true if key down, false if key up
+     * @param down true if key down, false if key up (unused — state comes from the KeyEvent itself)
      */
     public void sendKeyEvent(android.view.KeyEvent e, boolean down) {
         if (rdpcomm != null && rdpcomm.isInNormalProtocol()) {
-            int keyCode = e.getKeyCode();
-            int metaState = convertEventMetaState(e) | onScreenMetaState;
-            rdpcomm.writeKeyEvent(keyCode, metaState, down);
-            // Also process through keyboard mapper for complex keys
-            if (down) {
-                keyboardMapper.processAndroidKeyEvent(e, false);
-            }
+            processLocalKeyEvent(e.getKeyCode(), e, 0);
         }
     }
 

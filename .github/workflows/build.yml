@@ -1,0 +1,50 @@
+name: Build aRDP Pro
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ANDROID_HOME: /usr/local/lib/android/sdk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - uses: android-actions/setup-android@v3
+
+      - run: yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+
+      - name: Fix line endings
+        run: find . -name "*.sh" -type f -exec sed -i 's/\r$//' {} \;
+
+      - run: bash download-prebuilt-dependencies.sh
+      - run: bash bVNC/prepare_project.sh --skip-build aRDP $ANDROID_SDK_ROOT
+
+      - name: Verify & fix sqlcipher AAR
+        run: |
+          SQLCIPHER_AAR="common/aars/android-database-sqlcipher-4.5.4.aar"
+          if ! unzip -t "$SQLCIPHER_AAR" > /dev/null 2>&1; then
+            echo "SQLCipher AAR is corrupted, re-downloading..."
+            rm -f "$SQLCIPHER_AAR"
+            wget -O "$SQLCIPHER_AAR" \
+              'https://repo1.maven.org/maven2/net/zetetic/android-database-sqlcipher/4.5.4/android-database-sqlcipher-4.5.4.aar'
+            unzip -t "$SQLCIPHER_AAR" && echo "AAR verified OK" || echo "WARNING: AAR still invalid!"
+          else
+            echo "SQLCipher AAR is valid"
+          fi
+
+      - name: Clear Gradle caches
+        run: rm -rf ~/.gradle/caches/
+
+      - run: bash gradlew :aRDP-app:assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aRDP-Patched
+          path: aRDP-app/build/outputs/apk/debug/*.apk

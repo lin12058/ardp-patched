@@ -955,6 +955,11 @@ public class RemoteCanvasActivity extends AppCompatActivity implements
         // Make sure extra keys stow item is gone if extra keys are disabled and vice versa.
         setKeyStowDrawableAndVisibility(menu.findItem(R.id.extraKeysToggle));
         menu.findItem(R.id.itemColorMode).setVisible(remoteConnection.canUpdateColorModelConnected());
+        // Set toolbar hide/show menu item title based on current state
+        MenuItem hideToolbarItem = menu.findItem(R.id.itemHideToolbar);
+        if (hideToolbarItem != null) {
+            hideToolbarItem.setTitle(toolbarPermanentlyHidden ? R.string.show_toolbar : R.string.hide_toolbar);
+        }
         return true;
     }
 

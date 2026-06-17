@@ -41,8 +41,6 @@ import com.undatech.opaque.input.RemotePointer;
 import com.undatech.opaque.util.GeneralUtils;
 import com.undatech.opaque.util.UsbDeviceManager;
 
-import org.freedesktop.gstreamer.GStreamer;
-
 import java.util.ArrayList;
 import java.util.Objects;
 
@@ -146,7 +144,14 @@ public class SpiceCommunicator extends RfbConnectable {
         myself = this;
 
         try {
-            GStreamer.init(context);
+            // Use reflection to avoid compile-time dependency on GStreamer
+            try {
+                Class<?> gstreamerClass = Class.forName("org.freedesktop.gstreamer.GStreamer");
+                java.lang.reflect.Method initMethod = gstreamerClass.getMethod("init", android.content.Context.class);
+                initMethod.invoke(null, context);
+            } catch (ClassNotFoundException e) {
+                // GStreamer not available, skip initialization
+            }
         } catch (Exception e) {
             Log.e(TAG, Log.getStackTraceString(e));
             Toast.makeText(context, e.getMessage(), Toast.LENGTH_LONG).show();

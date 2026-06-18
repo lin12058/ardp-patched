@@ -84,7 +84,9 @@
     </item>
     <item
         android:id="@+id/itemHideToolbar"
+        android:icon="@drawable/ic_screen_black_48dp"
         android:title="@string/hide_toolbar"
+        app:showAsAction="always"
         />
     <item
         android:id="@+id/itemDisconnect"

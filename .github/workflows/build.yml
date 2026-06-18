@@ -44,7 +44,10 @@ jobs:
 
       - run: bash gradlew :aRDP-app:assembleDebug --no-daemon
 
+      - name: Prepare APK
+        run: cp aRDP-app/build/outputs/apk/debug/*.apk aRDP-Patched.apk
+
       - uses: actions/upload-artifact@v4
         with:
           name: aRDP-Patched
-          path: aRDP-app/build/outputs/apk/debug/*.apk
+          path: aRDP-Patched.apk

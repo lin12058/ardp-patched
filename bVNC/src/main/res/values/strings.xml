@@ -238,6 +238,8 @@
     <string name="connection_edit_delete_prompt">Do you want to edit or delete the connection</string>
     <string name="connection_edit">Edit</string>
     <string name="connection_delete">Delete</string>
+    <string name="connection_clone">Clone</string>
+    <string name="connection_cloned_successfully">Connection cloned successfully</string>
 
     <string name="control_check">Ctrl</string>
 

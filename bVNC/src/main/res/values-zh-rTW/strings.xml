@@ -173,6 +173,8 @@
     <string name="connection_edit_delete_prompt">你想編輯或刪除連接嗎？</string>
     <string name="connection_edit">編輯</string>
     <string name="connection_delete">刪除</string>
+    <string name="connection_clone">建立副本</string>
+    <string name="connection_cloned_successfully">已成功建立副本</string>
 
 
     <string name="control_check">Ctrl</string>

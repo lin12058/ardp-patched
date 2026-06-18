@@ -137,12 +137,14 @@ public class ConnectionGridActivity extends AppCompatActivity implements GetText
             AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(ConnectionGridActivity.this);
             String gridItemText = (String) ((TextView) v.findViewById(R.id.grid_item_text)).getText();
             alertDialogBuilder.setTitle(getString(R.string.connection_edit_delete_prompt) + " " + gridItemText + " ?");
-            CharSequence[] cs = {getString(R.string.connection_edit), getString(R.string.connection_delete)};
+            CharSequence[] cs = {getString(R.string.connection_edit), getString(R.string.connection_delete), getString(R.string.connection_clone)};
             alertDialogBuilder.setItems(cs, (dialog, item) -> {
                 if (getString(R.string.connection_edit).equals(cs[item].toString())) {
                     editConnection(v);
                 } else if (getString(R.string.connection_delete).equals(cs[item].toString())) {
                     deleteConnection(v);
+                } else if (getString(R.string.connection_clone).equals(cs[item].toString())) {
+                    cloneConnection(v);
                 }
             });
             AlertDialog alertDialog = alertDialogBuilder.create();
@@ -349,6 +351,49 @@ public class ConnectionGridActivity extends AppCompatActivity implements GetText
                     }
                     onResume();
                 }, null);
+    }
+
+    private void cloneConnection(View v) {
+        Log.d(TAG, "cloneConnection - Cloning a connection");
+        String runtimeId = (String) ((TextView) v.findViewById(R.id.grid_item_id)).getText();
+        Connection source = getConnectionLoader(this).getConnectionsById().get(runtimeId);
+        if (source == null) {
+            Log.e(TAG, "cloneConnection: source connection not found for id: " + runtimeId);
+            return;
+        }
+
+        if (!(source instanceof ConnectionBean)) {
+            Log.e(TAG, "cloneConnection: unsupported connection type, only SQLite connections can be cloned");
+            return;
+        }
+
+        ConnectionBean sourceBean = (ConnectionBean) source;
+
+        // Clone via ContentValues
+        ConnectionBean clone = new ConnectionBean(this);
+        clone.populateFromContentValues(sourceBean.Gen_getValues());
+        clone.markAsNewConnection();
+
+        // Modify nickname to indicate it's a copy
+        String originalNickname = sourceBean.getNickname();
+        if (originalNickname == null || originalNickname.isEmpty()) {
+            clone.setNickname(getString(R.string.copy_of));
+        } else {
+            clone.setNickname(getString(R.string.copy_of) + " " + originalNickname);
+        }
+
+        // Generate new identifiers
+        clone.setFilename(java.util.UUID.randomUUID().toString());
+        clone.setScreenshotFilename(com.iiordanov.bVNC.Utils.newScreenshotFileName());
+
+        // Save to database
+        Log.d(TAG, "cloneConnection: saving cloned connection");
+        clone.save(ConnectionGridActivity.this);
+
+        // Refresh the grid
+        onResume();
+
+        Snackbar.make(gridView, R.string.connection_cloned_successfully, Snackbar.LENGTH_SHORT).show();
     }
 
     @Override

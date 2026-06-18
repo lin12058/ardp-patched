@@ -210,6 +210,7 @@ Based on official aRDP Pro v6.4.2, with the following enhancements:
 ### Feature Changes
 1. **Accessibility Service for Meta/Win Key Capture** — Added  to intercept physical keyboard events (including Meta/Win key) and forward them to RDP sessions. Must be manually enabled in Settings > Accessibility.
 2. **Manual Toolbar Hide/Show Toggle** — Added "Hide Toolbar" menu item that permanently hides the toolbar. Click again to restore. Reconnecting also restores the toolbar.
+3. **Clone Connection (创建副本)** — Long-press any saved connection and select "Clone" to create an identical copy with all settings preserved. The clone is saved with "Copy of" prefix for quick experimentation without losing the original configuration.
 
 ### Source Code Changes
 | File | Change |
@@ -220,6 +221,7 @@ Based on official aRDP Pro v6.4.2, with the following enhancements:
 |  | Added , ,  |
 |  | Added , , toolbar toggle menu handler |
 |  | Added  menu item |
+|  | Added ,  long-press option and  method |
 |  | Added , ,  strings |
 |  | Added Chinese translations for new strings |
 |  | Commented out  (not in v17 prebuilt libs) |
@@ -229,7 +231,8 @@ Based on official aRDP Pro v6.4.2, with the following enhancements:
 
 ### Build Configuration
 - JDK 21 (required by AGP 8.13 + compileSdkVersion 35)
-- GitHub Actions CI: 
+- GitHub Actions CI: `.github/workflows/build.yml`
+- Artifacts: 5 per-architecture APKs (arm64-v8a, armeabi-v7a, x86_64, x86, universal)
 - Prebuilt dependencies: v17
 
 ### License

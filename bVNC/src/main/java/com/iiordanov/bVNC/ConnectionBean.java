@@ -32,6 +32,7 @@ import android.widget.ImageView.ScaleType;
 import androidx.annotation.NonNull;
 
 import com.antlersoft.android.dbimpl.NewInstance;
+import com.iiordanov.bVNC.input.TouchInputHandlerDirectDragPan;
 import com.iiordanov.bVNC.input.TouchInputHandlerDirectSwipePan;
 import com.iiordanov.util.NetworkUtils;
 import com.undatech.opaque.util.GeneralUtils;
@@ -62,7 +63,7 @@ public class ConnectionBean extends AbstractConnectionBean implements Comparable
     private String connectionConfigFile = null;
 
     public ConnectionBean(Context context) {
-        String inputMode = TouchInputHandlerDirectSwipePan.ID;
+        String inputMode = TouchInputHandlerDirectDragPan.ID;
         ScaleType scaling = ScaleType.MATRIX;
         boolean preferSendingUnicode = Constants.preferSendingUnicodeDefaultValue;
         boolean useDpadAsArrows = true;
@@ -181,7 +182,7 @@ public class ConnectionBean extends AbstractConnectionBean implements Comparable
     private static String getDefaultInputMode(Context context) {
         String inputMode;
         inputMode = Utils.querySharedPreferenceString(context, Constants.defaultInputMethodTag,
-                TouchInputHandlerDirectSwipePan.ID);
+                TouchInputHandlerDirectDragPan.ID);
         return inputMode;
     }
 

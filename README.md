@@ -207,10 +207,19 @@ https://groups.google.com/forum/#!forum/bvnc-ardp-aspice-opaque-remote-desktop-c
 
 Based on official aRDP Pro v6.4.2, with the following enhancements:
 
+### Xiaomi Pad Optimization / 小米平板优化
+
+> AI-assisted development & cloud-compiled via GitHub Actions | AI 辅助开发 + GitHub Actions 云端编译
+
+This fork is optimized for **Xiaomi Pad** (小米平板) users who frequently switch between remote desktop and game streaming (e.g. Moonlight). The accessibility service selectively intercepts Meta/Win key only inside aRDP, leaving Moonlight unaffected. Enable **Workstation Mode** (工作台模式) on your tablet to prevent system-level Meta key interception. Alternatively, use **Key Mapper** (键盘映射) for global interception.
+
+该分支专为小米平板优化，配合 Moonlight 无冲突。Meta 键仅在 aRDP 内拦截，不影响其他应用。建议开启工作台模式。备选方案：使用键盘映射全局拦截。
+
 ### Feature Changes
 1. **Accessibility Service for Meta/Win Key Capture** — Added  to intercept physical keyboard events (including Meta/Win key) and forward them to RDP sessions. Must be manually enabled in Settings > Accessibility.
 2. **Manual Toolbar Hide/Show Toggle** — Added "Hide Toolbar" menu item that permanently hides the toolbar. Click again to restore. Reconnecting also restores the toolbar.
 3. **Clone Connection (创建副本)** — Long-press any saved connection and select "Clone" to create an identical copy with all settings preserved. The clone is saved with "Copy of" prefix for quick experimentation without losing the original configuration.
+4. **Default Input Mode: Direct Drag Pan (直接按住并平移)** — Changed default input mode from Direct Swipe Pan to Direct Drag Pan for better Xiaomi Pad touch experience. New connections default to drag-to-pan. Existing connections can change in connection settings.
 
 ### Source Code Changes
 | File | Change |

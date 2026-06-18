@@ -372,7 +372,7 @@ public class ConnectionGridActivity extends AppCompatActivity implements GetText
         // Clone via ContentValues
         ConnectionBean clone = new ConnectionBean(this);
         clone.populateFromContentValues(sourceBean.Gen_getValues());
-        clone.markAsNewConnection();
+        clone.set_Id(0);
 
         // Modify nickname to indicate it's a copy
         String originalNickname = sourceBean.getNickname();

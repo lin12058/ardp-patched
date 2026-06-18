@@ -15,16 +15,16 @@ import com.undatech.opaque.input.RemotePointer;
 
 public class RemoteRdpKeyboard extends RemoteKeyboard {
     private final static String TAG = "RemoteRdpKeyboard";
-
-    // Static instance reference for AccessibilityService to access
-    public static volatile RemoteRdpKeyboard instance = null;
-    // Whether keyboard is active and should receive events
-    public volatile boolean keyboardActive = false;
-
     protected RdpKeyboardMapper keyboardMapper;
     protected Viewable canvas;
     protected InputCarriable remoteInput;
     private RdpCommunicator rdpcomm;
+
+    public static RemoteRdpKeyboard instance;
+
+    public boolean isConnected() {
+        return rdpcomm != null && rdpcomm.isInNormalProtocol();
+    }
 
     public RemoteRdpKeyboard(
             RdpCommunicator r, Viewable v, InputCarriable i, Handler h,
@@ -38,19 +38,6 @@ public class RemoteRdpKeyboard extends RemoteKeyboard {
         keyboardMapper.init(context);
         keyboardMapper.reset((RdpKeyboardMapper.KeyProcessingListener) r);
         instance = this;
-        keyboardActive = true;
-    }
-
-    /**
-     * Send a key event from AccessibilityService.
-     * Routes through processLocalKeyEvent for proper scancode mapping and state tracking.
-     * @param e the KeyEvent from accessibility service
-     * @param down true if key down, false if key up (unused — state comes from the KeyEvent itself)
-     */
-    public void sendKeyEvent(android.view.KeyEvent e, boolean down) {
-        if (rdpcomm != null && rdpcomm.isInNormalProtocol()) {
-            processLocalKeyEvent(e.getKeyCode(), e, 0);
-        }
     }
 
     public boolean processLocalKeyEvent(int keyCode, KeyEvent evt, int additionalMetaState) {
